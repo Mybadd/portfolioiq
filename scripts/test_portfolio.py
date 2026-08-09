@@ -13,5 +13,22 @@ portfolio = service.create_portfolio(
     }
 )
 
-print("Portfolio created successfully.")
+portfolio_returns = service.calculate_portfolio_returns(
+    portfolio
+)
+
+print()
+print("Portfolio:")
 print(portfolio)
+
+print()
+print("Portfolio returns:")
+print(portfolio_returns.head())
+
+print()
+print("Number of trading days:")
+print(len(portfolio_returns))
+
+print()
+print("Missing values:")
+print(portfolio_returns.isnull().sum())

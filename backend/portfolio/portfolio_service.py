@@ -3,10 +3,11 @@ Portfolio Service
 
 Responsible for creating and validating investor portfolios.
 """
-
+import pandas as pd
 from backend.models.portfolio import Portfolio
 from backend.core.logger import get_logger
 from backend.constants.market_universe import SUPPORTED_STOCKS
+from backend.portfolio.portfolio_data_service import PortfolioDataService
 
 
 class PortfolioService:
@@ -16,6 +17,7 @@ class PortfolioService:
 
     def __init__(self) -> None:
         self.logger = get_logger(self.__class__.__name__)
+        self.portfolio_data_service = PortfolioDataService()
 
     def create_portfolio(
         self,
@@ -83,3 +85,42 @@ class PortfolioService:
             raise ValueError(
                 f"Unsupported stock symbols: {unsupported_symbols}"
             )   
+    def calculate_portfolio_returns(self,portfolio: Portfolio,) -> pd.Series:
+        """
+        Calculate historical daily returns for a portfolio.
+        """
+
+        self.logger.info(
+            "Starting portfolio return calculation."
+        )
+
+        symbols = list(portfolio.weights.keys())
+
+        price_data = self.portfolio_data_service.get_price_data(
+            symbols
+        )
+
+        combined_prices = (
+            self.portfolio_data_service.combine_price_data(
+                price_data
+            )
+        )
+
+        asset_returns = (
+            self.portfolio_data_service.calculate_returns(
+                combined_prices
+            )
+        )
+
+        portfolio_returns = (
+            self.portfolio_data_service.calculate_portfolio_returns(
+                asset_returns,
+                portfolio.weights,
+            )
+        )
+
+        self.logger.info(
+            "Portfolio return calculation completed."
+        )
+
+        return portfolio_returns
