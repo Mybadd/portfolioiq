@@ -1,19 +1,28 @@
 # Market Data Layer
 
-Primary Provider:
-- Alpha Vantage
+## 1. Overview
 
-Backup Provider:
-- Yahoo Finance
+The Market Data Layer is responsible for retrieving, validating, and providing market data required by the PortfolioIQ quantitative risk engine.
 
-Assets:
-- Stocks
-- Exchange Traded Funds
-- Indices
+It currently uses Yahoo Finance through the `yfinance` Python library.
 
-Frequency:
-- Daily
+The market data layer supports:
 
-Storage:
-- CSV initially
-- PostgreSQL later
+- Historical stock prices
+- Current/latest available stock prices
+- Daily market data
+- Symbol validation
+- Market-data validation
+
+---
+
+## 2. Current Market Data Provider
+
+### Primary Provider
+
+Yahoo Finance
+
+Implementation:
+
+```python
+import yfinance as yf
