@@ -89,27 +89,35 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Progress */}
-      <div className="border-b border-white/10 bg-[#0b0f15]">
-        <div className="mx-auto flex max-w-7xl items-center px-6 lg:px-10">
-          {[
-            ["01", "Profile", true],
-            ["02", "Portfolio", false],
-            ["03", "Dashboard", false],
-            ["04", "Risk", false],
-            ["05", "Optimize", false],
-            ["06", "Stress Test", false],
-            ["07", "Report", false],
-          ].map(([number, label, active], index) => (
-            <div
+              {/* Progress */}
+    <div className="border-b border-white/10 bg-[#0b0f15]">
+      <div className="mx-auto flex max-w-7xl items-center px-6 lg:px-10">
+        {[
+          ["01", "Profile", "/"],
+          ["02", "Portfolio", "/portfolio"],
+          ["03", "Dashboard", "/dashboard"],
+          ["04", "Risk", "/risk-analysis"],
+          ["05", "Optimize", "/optimization"],
+          ["06", "Stress Test", "/stress-test"],
+          ["07", "Report", "/report"],
+        ].map(([number, label, path]) => {
+          const active = number === "01";
+
+          return (
+            <a
               key={number}
-              className={`flex items-center gap-2 border-r border-white/10 px-4 py-3 first:pl-0 ${
-                active ? "text-zinc-100" : "text-zinc-600"
+              href={path}
+              className={`flex items-center gap-2 border-r border-white/10 px-4 py-3 first:pl-0 transition ${
+                active
+                  ? "text-zinc-100"
+                  : "text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
               }`}
             >
               <span
                 className={`font-mono text-[10px] ${
-                  active ? "text-emerald-400" : "text-zinc-600"
+                  active
+                    ? "text-emerald-400"
+                    : "text-zinc-600"
                 }`}
               >
                 {number}
@@ -118,12 +126,11 @@ export default function Home() {
               <span className="text-[10px] uppercase tracking-[0.14em]">
                 {label}
               </span>
-
-              {index < 6 && null}
-            </div>
-          ))}
-        </div>
+            </a>
+          );
+        })}
       </div>
+    </div>
 
       {/* Main content */}
       <section className="mx-auto grid min-h-[calc(100vh-105px)] max-w-7xl grid-cols-1 gap-12 px-6 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:px-10 lg:py-20">
