@@ -76,3 +76,40 @@ This separation allows each component to be developed, tested, and maintained in
                             |
                             v
                   Comprehensive Report
+
+
+
+---
+
+# Update `docs/architecture.md`
+
+Add the Risk API to the architecture:
+
+```text
+Investor / Portfolio Input
+          ↓
+     Portfolio API
+          ↓
+    PortfolioService
+          ↓
+     Portfolio Model
+          ↓
+       Risk API
+          ↓
+PortfolioDataService
+          ↓
+ MarketDataService
+          ↓
+ Historical Market Data
+          ↓
+    Daily Returns
+          ↓
+     RiskService
+          ↓
+    Risk Metrics
+          ↓
+ RiskScoringService
+          ↓
+InvestorAssessmentService
+          ↓
+   RiskReportService

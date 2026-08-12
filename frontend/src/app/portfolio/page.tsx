@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,6 +22,14 @@ interface Holding {
   weight: string;
 }
 
+interface StoredPortfolio {
+  inputMode: InputMode;
+  holdings: Holding[];
+  calculatedWeights?: Record<string, number>;
+  assetCount?: number;
+  totalWeight?: number;
+}
+
 const emptyHolding = (id: number): Holding => ({
   id,
   symbol: "",
@@ -39,6 +47,43 @@ export default function PortfolioPage() {
   ]);
 
   const [error, setError] = useState("");
+
+  /*
+   * Restore previously entered portfolio data.
+   *
+   * This allows the user to move between Portfolio and Dashboard
+   * without losing the holdings that were already entered.
+   */
+  useEffect(() => {
+    const storedPortfolio = sessionStorage.getItem(
+      "portfolioiq-portfolio"
+    );
+
+    if (!storedPortfolio) {
+      return;
+    }
+
+    try {
+      const portfolio: StoredPortfolio = JSON.parse(
+        storedPortfolio
+      );
+
+      if (portfolio.inputMode) {
+        setMode(portfolio.inputMode);
+      }
+
+      if (
+        Array.isArray(portfolio.holdings) &&
+        portfolio.holdings.length > 0
+      ) {
+        setHoldings(portfolio.holdings);
+      }
+    } catch {
+      console.error(
+        "Unable to restore saved portfolio."
+      );
+    }
+  }, []);
 
   const updateHolding = (
     id: number,
@@ -92,7 +137,9 @@ export default function PortfolioPage() {
 
     for (const holding of holdings) {
       if (!holding.symbol.trim()) {
-        setError("Every holding must have a stock symbol.");
+        setError(
+          "Every holding must have a stock symbol."
+        );
         return false;
       }
 
@@ -132,7 +179,8 @@ export default function PortfolioPage() {
 
     if (mode === "weights") {
       const totalWeight = holdings.reduce(
-        (sum, holding) => sum + Number(holding.weight),
+        (sum, holding) =>
+          sum + Number(holding.weight),
         0
       );
 
@@ -149,22 +197,110 @@ export default function PortfolioPage() {
     return true;
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!validatePortfolio()) {
       return;
     }
 
-    const portfolio = {
-      inputMode: mode,
-      holdings,
-    };
+    setError("");
 
-    sessionStorage.setItem(
-      "portfolioiq-portfolio",
-      JSON.stringify(portfolio)
-    );
+    try {
+      /*
+       * DMAT Holdings
+       *
+       * Send the number of shares to the Python backend.
+       * The backend retrieves current market prices and
+       * calculates the portfolio weights.
+       */
+      if (mode === "shares") {
+        const holdingsPayload = holdings.reduce(
+          (result, holding) => {
+            result[
+              holding.symbol.trim().toUpperCase()
+            ] = Number(holding.shares);
 
-    window.location.href = "/dashboard";
+            return result;
+          },
+          {} as Record<string, number>
+        );
+
+        const response = await fetch(
+          "http://127.0.0.1:8000/api/portfolio/from-shares",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              holdings: holdingsPayload,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          let errorMessage =
+            "Failed to create portfolio.";
+
+          try {
+            const errorData = await response.json();
+
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            }
+          } catch {
+            // Keep default error message.
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const portfolioResult = await response.json();
+
+        const portfolio: StoredPortfolio = {
+          inputMode: mode,
+          holdings,
+          calculatedWeights:
+            portfolioResult.weights,
+          assetCount:
+            portfolioResult.asset_count,
+          totalWeight:
+            portfolioResult.total_weight,
+        };
+
+        sessionStorage.setItem(
+          "portfolioiq-portfolio",
+          JSON.stringify(portfolio)
+        );
+
+        window.location.href = "/dashboard";
+
+        return;
+      }
+
+      /*
+       * Investment Amounts and Portfolio Weights
+       *
+       * These will be connected to dedicated backend
+       * endpoints later.
+       */
+      const portfolio: StoredPortfolio = {
+        inputMode: mode,
+        holdings,
+      };
+
+      sessionStorage.setItem(
+        "portfolioiq-portfolio",
+        JSON.stringify(portfolio)
+      );
+
+      window.location.href = "/dashboard";
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to PortfolioIQ backend."
+      );
+    }
   };
 
   return (
@@ -174,7 +310,10 @@ export default function PortfolioPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-10">
           <div>
             <div className="text-lg font-semibold tracking-[0.18em]">
-              PORTFOLIO<span className="text-emerald-400">IQ</span>
+              PORTFOLIO
+              <span className="text-emerald-400">
+                IQ
+              </span>
             </div>
 
             <div className="mt-0.5 text-[9px] uppercase tracking-[0.28em] text-zinc-500">
@@ -193,21 +332,27 @@ export default function PortfolioPage() {
       <div className="border-b border-white/10 bg-[#0b0f15]">
         <div className="mx-auto flex max-w-7xl items-center overflow-x-auto px-6 lg:px-10">
           {[
-            ["01", "Profile"],
-            ["02", "Portfolio"],
-            ["03", "Dashboard"],
-            ["04", "Risk"],
-            ["05", "Optimize"],
-            ["06", "Stress Test"],
-            ["07", "Report"],
-          ].map(([number, label]) => {
+            ["01", "Profile", "/"],
+            ["02", "Portfolio", "/portfolio"],
+            ["03", "Dashboard", "/dashboard"],
+            ["04", "Risk", "/risk"],
+            ["05", "Optimize", "/optimize"],
+            ["06", "Stress Test", "/stress-test"],
+            ["07", "Report", "/report"],
+          ].map(([number, label, route]) => {
             const active = number === "02";
 
             return (
-              <div
+              <button
+                type="button"
                 key={number}
+                onClick={() => {
+                  window.location.href = route;
+                }}
                 className={`flex shrink-0 items-center gap-2 border-r border-white/10 px-4 py-3 first:pl-0 ${
-                  active ? "text-zinc-100" : "text-zinc-600"
+                  active
+                    ? "text-zinc-100"
+                    : "text-zinc-600 hover:text-zinc-300"
                 }`}
               >
                 <span
@@ -223,7 +368,7 @@ export default function PortfolioPage() {
                 <span className="text-[10px] uppercase tracking-[0.14em]">
                   {label}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -244,8 +389,8 @@ export default function PortfolioPage() {
 
           <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-500">
             Provide your current holdings or desired allocation.
-            PortfolioIQ will use this information to construct your
-            portfolio and perform quantitative risk analysis.
+            PortfolioIQ will use this information to construct
+            your portfolio and perform quantitative risk analysis.
           </p>
         </div>
 
@@ -374,7 +519,9 @@ export default function PortfolioPage() {
 
             <div className="font-mono text-[10px] text-zinc-600">
               {holdings.length}{" "}
-              {holdings.length === 1 ? "ASSET" : "ASSETS"}
+              {holdings.length === 1
+                ? "ASSET"
+                : "ASSETS"}
             </div>
           </div>
 
@@ -559,7 +706,9 @@ export default function PortfolioPage() {
                 {/* Delete */}
                 <button
                   type="button"
-                  onClick={() => removeHolding(holding.id)}
+                  onClick={() =>
+                    removeHolding(holding.id)
+                  }
                   disabled={holdings.length === 1}
                   className="flex h-10 w-10 items-center justify-center text-zinc-700 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
                   title="Remove holding"
@@ -594,7 +743,8 @@ export default function PortfolioPage() {
               {holdings
                 .reduce(
                   (sum, holding) =>
-                    sum + Number(holding.weight || 0),
+                    sum +
+                    Number(holding.weight || 0),
                   0
                 )
                 .toFixed(2)}
@@ -629,6 +779,7 @@ export default function PortfolioPage() {
             className="group flex items-center justify-center gap-3 bg-emerald-400 px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#06100c] transition hover:bg-emerald-300"
           >
             Continue to Dashboard
+
             <ArrowRight
               size={16}
               className="transition-transform group-hover:translate-x-1"

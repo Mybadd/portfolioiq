@@ -1,11 +1,11 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
 import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
-  CheckCircle2,
   ChevronRight,
   ShieldAlert,
   TrendingDown,
@@ -49,38 +49,42 @@ const riskContributions = [
 ];
 
 export default function DashboardPage() {
-    const [investmentAmount, setInvestmentAmount] = useState(0);
-    const [investmentHorizon, setInvestmentHorizon] = useState(0);
-    const [riskTolerance, setRiskTolerance] = useState("");
-    const [objective, setObjective] = useState("");
-    const [portfolio, setPortfolio] = useState<any>(null);
-useEffect(() => {
-  const storedProfile = sessionStorage.getItem(
-    "portfolioiq-investor-profile"
-  );
+  const [investmentAmount, setInvestmentAmount] = useState(0);
+  const [investmentHorizon, setInvestmentHorizon] = useState(0);
+  const [riskTolerance, setRiskTolerance] = useState("");
+  const [objective, setObjective] = useState("");
+  const [portfolio, setPortfolio] = useState<any>(null);
 
-  if (!storedProfile) {
-    window.location.href = "/";
-    return;
-  }
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem(
+      "portfolioiq-investor-profile"
+    );
 
-  const profile = JSON.parse(storedProfile);
+    if (!storedProfile) {
+      window.location.href = "/";
+      return;
+    }
 
-  setInvestmentAmount(profile.investmentAmount);
-  setInvestmentHorizon(profile.investmentHorizonYears);
-  setRiskTolerance(profile.riskTolerance);
-  setObjective(profile.investmentObjective);
+    const profile = JSON.parse(storedProfile);
+
+    setInvestmentAmount(profile.investmentAmount);
+    setInvestmentHorizon(profile.investmentHorizonYears);
+    setRiskTolerance(profile.riskTolerance);
+    setObjective(profile.investmentObjective);
+
     const storedPortfolio = sessionStorage.getItem(
-        "portfolioiq-portfolio"
-        );
+      "portfolioiq-portfolio"
+    );
 
-        if (!storedPortfolio) {
-        window.location.href = "/portfolio";
-        return;
-        }
+    if (!storedPortfolio) {
+      window.location.href = "/portfolio";
+      return;
+    }
 
-        setPortfolio(JSON.parse(storedPortfolio));
-}, []);
+    setPortfolio(JSON.parse(storedPortfolio));
+  }, []);
+
+  const calculatedWeights = portfolio?.calculatedWeights ?? {};
 
   return (
     <main className="min-h-screen bg-[#080b10] text-zinc-100">
@@ -108,21 +112,27 @@ useEffect(() => {
       <div className="border-b border-white/10 bg-[#0b0f15]">
         <div className="mx-auto flex max-w-7xl items-center overflow-x-auto px-6 lg:px-10">
           {[
-            ["01", "Profile"],
-            ["02", "Portfolio"],
-            ["03", "Dashboard"],
-            ["04", "Risk"],
-            ["05", "Optimize"],
-            ["06", "Stress Test"],
-            ["07", "Report"],
-          ].map(([number, label]) => {
+            ["01", "Profile", "/"],
+            ["02", "Portfolio", "/portfolio"],
+            ["03", "Dashboard", "/dashboard"],
+            ["04", "Risk", "/risk"],
+            ["05", "Optimize", "/optimize"],
+            ["06", "Stress Test", "/stress-test"],
+            ["07", "Report", "/report"],
+          ].map(([number, label, route]) => {
             const active = number === "03";
 
             return (
-              <div
+              <button
+                type="button"
                 key={number}
+                onClick={() => {
+                  window.location.href = route;
+                }}
                 className={`flex shrink-0 items-center gap-2 border-r border-white/10 px-4 py-3 first:pl-0 ${
-                  active ? "text-zinc-100" : "text-zinc-600"
+                  active
+                    ? "text-zinc-100"
+                    : "text-zinc-600 hover:text-zinc-300"
                 }`}
               >
                 <span
@@ -136,7 +146,7 @@ useEffect(() => {
                 <span className="text-[10px] uppercase tracking-[0.14em]">
                   {label}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -157,7 +167,7 @@ useEffect(() => {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-500">
-              A quantitative overview of your portfolio's risk,
+              A quantitative overview of your portfolio&apos;s risk,
               performance characteristics, and investor compatibility.
             </p>
           </div>
@@ -219,9 +229,10 @@ useEffect(() => {
                 </p>
 
                 <button
-                  onClick={() =>
-                    (window.location.href = "/risk-analysis")
-                  }
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/risk";
+                  }}
                   className="mt-5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-400 hover:text-emerald-300"
                 >
                   View detailed assessment
@@ -279,33 +290,37 @@ useEffect(() => {
             </div>
 
             <div className="mt-7 space-y-5">
-              {[
-                ["NFLX", 20],
-                ["PEP", 25],
-                ["WMT", 20],
-                ["UNH", 15],
-                ["DIS", 20],
-              ].map(([symbol, value]) => (
-                <div key={symbol}>
-                  <div className="mb-2 flex justify-between text-[10px]">
-                    <span className="font-mono text-zinc-400">
-                      {symbol}
-                    </span>
+              {Object.entries(calculatedWeights).map(
+                ([symbol, value]) => (
+                  <div key={symbol}>
+                    <div className="mb-2 flex justify-between text-[10px]">
+                      <span className="font-mono text-zinc-400">
+                        {symbol}
+                      </span>
 
-                    <span className="font-mono text-zinc-600">
-                      {value}%
-                    </span>
-                  </div>
+                      <span className="font-mono text-zinc-600">
+                        {Number(value).toFixed(2)}%
+                      </span>
+                    </div>
 
-                  <div className="h-1 bg-zinc-900">
-                    <div
-                      className="h-1 bg-zinc-400"
-                      style={{ width: `${value}%` }}
-                    />
+                    <div className="h-1 bg-zinc-900">
+                      <div
+                        className="h-1 bg-zinc-400"
+                        style={{
+                          width: `${Number(value)}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
+
+            {Object.keys(calculatedWeights).length === 0 && (
+              <div className="mt-7 text-xs text-zinc-600">
+                Portfolio allocation data unavailable.
+              </div>
+            )}
           </div>
 
           {/* Risk contribution */}
@@ -389,9 +404,10 @@ useEffect(() => {
             </div>
 
             <button
-              onClick={() =>
-                (window.location.href = "/optimization")
-              }
+              type="button"
+              onClick={() => {
+                window.location.href = "/optimize";
+              }}
               className="flex shrink-0 items-center justify-center gap-2 bg-emerald-400 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#06100c] hover:bg-emerald-300"
             >
               Explore Optimization
@@ -403,9 +419,10 @@ useEffect(() => {
         {/* Navigation */}
         <div className="mt-8 flex justify-end">
           <button
-            onClick={() =>
-              (window.location.href = "/risk-analysis")
-            }
+            type="button"
+            onClick={() => {
+              window.location.href = "/risk";
+            }}
             className="flex items-center gap-2 border border-white/10 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
           >
             Continue to Risk Analysis
@@ -423,4 +440,4 @@ function PieChartIcon() {
       <div className="absolute right-0 top-0 h-3 w-3 border-l border-b border-zinc-600 bg-[#0c1118]" />
     </div>
   );
-}
+} 

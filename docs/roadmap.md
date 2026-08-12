@@ -172,3 +172,34 @@ will later be replaced with results from the backend risk engine.
 ```text
 GET  /health
 POST /api/portfolio/create
+
+## Completed Milestones
+
+### Portfolio Input
+- Investor profile frontend implemented.
+- Portfolio input page implemented.
+- DMAT share-based portfolio input implemented.
+- Portfolio weights calculated from current market prices.
+- Portfolio data persisted using sessionStorage.
+
+### Portfolio API
+- `POST /api/portfolio/create` implemented and tested.
+- `POST /api/portfolio/from-shares` implemented and tested.
+
+### Risk API
+- Risk metrics model completed.
+- Portfolio historical data pipeline connected to RiskService.
+- `POST /api/risk/analyze` implemented.
+- Risk API tested successfully using Postman.
+- Annualized volatility calculation verified.
+- Maximum drawdown calculation verified.
+- Sharpe ratio calculation verified.
+- Historical VaR calculation verified.
+- Expected Shortfall calculation verified.
+- Asset-level risk contribution calculation verified.
+
+### Frontend Integration
+- Next.js frontend connected to FastAPI.
+- Portfolio data passed from frontend to backend.
+- Calculated portfolio weights displayed on Dashboard.
+- Portfolio state preserved across navigation.  
