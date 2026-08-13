@@ -48,3 +48,19 @@ attributable to each asset.
 
 This allows the system to identify assets that contribute
 disproportionately to portfolio risk.
+## Current Implementation
+
+Risk analysis is performed using historical daily market data.
+
+The current pipeline is:
+
+1. Retrieve historical prices for portfolio assets.
+2. Combine closing prices.
+3. Calculate daily asset returns.
+4. Calculate weighted portfolio returns.
+5. Apply the risk-analysis calculations.
+6. Calculate asset-level risk contribution.
+
+The current Risk API exposes these calculations through:
+
+`POST /api/risk/analyze`

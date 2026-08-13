@@ -86,30 +86,73 @@ This separation allows each component to be developed, tested, and maintained in
 Add the Risk API to the architecture:
 
 ```text
-Investor / Portfolio Input
-          ↓
-     Portfolio API
-          ↓
-    PortfolioService
-          ↓
-     Portfolio Model
-          ↓
-       Risk API
-          ↓
-PortfolioDataService
-          ↓
- MarketDataService
-          ↓
- Historical Market Data
-          ↓
-    Daily Returns
-          ↓
-     RiskService
-          ↓
-    Risk Metrics
-          ↓
- RiskScoringService
-          ↓
-InvestorAssessmentService
-          ↓
+                    INVESTOR
+                       |
+                       v
+              Investor Profile
+                       |
+                       v
+               Portfolio Input
+              /       |        \
+             /        |         \
+      DMAT Holdings  Amounts   Weights
+             \        |        /
+              \       |       /
+               v      v      v
+              Portfolio API
+                     |
+                     v
+             PortfolioService
+                     |
+                     v
+              Portfolio Model
+                     |
+                     v
+              Portfolio Weights
+                     |
+          +----------+----------+
+          |                     |
+          v                     v
+   PortfolioDataService   Risk API
+          |                     |
+          v                     v
+   MarketDataService       RiskService
+          |                     |
+          v                     |
+ Historical Market Data         |
+          |                     |
+          v                     |
+    Daily Asset Returns         |
+          |                     |
+          +----------+----------+
+                     |
+                     v
+                Risk Metrics
+                     |
+          +----------+----------+
+          |          |           |
+          v          v           v
+     Risk Score   Risk      Stress Test
+                  Contribution
+          |          |           |
+          +----------+-----------+
+                     |
+                     v
+       InvestorAssessmentService
+                     |
+          +----------+----------+
+          |                     |
+          v                     v
+ Constraint Feasibility   Recommendations
+          |
+          v
+   PortfolioOptimizer
+          |
+          v
+  Optimized Portfolio
+          |
+          v
    RiskReportService
+          |
+          v
+ Comprehensive Risk Report

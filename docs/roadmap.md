@@ -155,6 +155,8 @@ will later be replaced with results from the backend risk engine.
 
 ## Phase 7 — FastAPI Integration
 
+## Phase 7 — FastAPI Integration
+
 **Status: In Progress**
 
 ### Completed
@@ -163,43 +165,24 @@ will later be replaced with results from the backend risk engine.
 - Added API health-check endpoint.
 - Added FastAPI automatic documentation.
 - Added portfolio creation API.
-- Connected the portfolio API to the existing
-  `PortfolioService`.
-- Successfully tested the portfolio creation endpoint.
+- Added portfolio creation from share holdings API.
+- Connected portfolio APIs to the existing portfolio services.
+- Successfully tested portfolio APIs using Postman.
+- Added Risk Analysis API.
+- Connected Risk API to `PortfolioDataService`.
+- Connected Risk API to `RiskService`.
+- Successfully tested `POST /api/risk/analyze` using Postman.
+- Verified annualized volatility calculation.
+- Verified maximum drawdown calculation.
+- Verified Sharpe ratio calculation.
+- Verified Historical VaR calculation.
+- Verified Expected Shortfall calculation.
+- Verified asset-level risk contribution calculation.
 
 ### Current Endpoints
 
 ```text
 GET  /health
 POST /api/portfolio/create
-
-## Completed Milestones
-
-### Portfolio Input
-- Investor profile frontend implemented.
-- Portfolio input page implemented.
-- DMAT share-based portfolio input implemented.
-- Portfolio weights calculated from current market prices.
-- Portfolio data persisted using sessionStorage.
-
-### Portfolio API
-- `POST /api/portfolio/create` implemented and tested.
-- `POST /api/portfolio/from-shares` implemented and tested.
-
-### Risk API
-- Risk metrics model completed.
-- Portfolio historical data pipeline connected to RiskService.
-- `POST /api/risk/analyze` implemented.
-- Risk API tested successfully using Postman.
-- Annualized volatility calculation verified.
-- Maximum drawdown calculation verified.
-- Sharpe ratio calculation verified.
-- Historical VaR calculation verified.
-- Expected Shortfall calculation verified.
-- Asset-level risk contribution calculation verified.
-
-### Frontend Integration
-- Next.js frontend connected to FastAPI.
-- Portfolio data passed from frontend to backend.
-- Calculated portfolio weights displayed on Dashboard.
-- Portfolio state preserved across navigation.  
+POST /api/portfolio/from-shares
+POST /api/risk/analyze  

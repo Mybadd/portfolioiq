@@ -7,10 +7,21 @@ Provides portfolio risk analysis through FastAPI.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.models.investor_profile import InvestorProfile
+
 from backend.portfolio.portfolio_data_service import (
     PortfolioDataService,
 )
+
 from backend.risk.risk_service import RiskService
+
+from backend.risk.risk_scoring_service import (
+    RiskScoringService,
+)
+
+from backend.services.investor_assessment_service import (
+    InvestorAssessmentService,
+)
 
 
 router = APIRouter(
@@ -20,6 +31,44 @@ router = APIRouter(
 
 portfolio_data_service = PortfolioDataService()
 risk_service = RiskService()
+risk_scoring_service = RiskScoringService()
+investor_assessment_service = InvestorAssessmentService()
+
+
+class InvestorProfileRequest(BaseModel):
+    """
+    Investor profile used for portfolio compatibility assessment.
+    """
+
+    investment_amount: float = Field(
+        ...,
+        gt=0,
+        description="Total amount invested.",
+    )
+
+    investment_horizon_years: int = Field(
+        ...,
+        gt=0,
+        description="Investment horizon in years.",
+    )
+
+    risk_tolerance: str = Field(
+        ...,
+        description="Investor risk tolerance: LOW, MODERATE, or HIGH.",
+    )
+
+    maximum_acceptable_loss: float = Field(
+        ...,
+        gt=0,
+        le=1,
+        description="Maximum acceptable loss expressed as a decimal.",
+    )
+
+    investment_objective: str = Field(
+        ...,
+        min_length=1,
+        description="Primary investment objective.",
+    )
 
 
 class RiskAnalysisRequest(BaseModel):
@@ -42,7 +91,18 @@ class RiskAnalysisRequest(BaseModel):
         default=0.95,
         gt=0.0,
         lt=1.0,
-        description="Confidence level used for VaR and Expected Shortfall.",
+        description=(
+            "Confidence level used for VaR and "
+            "Expected Shortfall."
+        ),
+    )
+
+    investor_profile: InvestorProfileRequest = Field(
+        ...,
+        description=(
+            "Investor profile used for compatibility "
+            "assessment."
+        ),
     )
 
 
@@ -51,16 +111,24 @@ def analyze_risk(
     request: RiskAnalysisRequest,
 ) -> dict:
     """
-    Calculate quantitative risk metrics for a portfolio.
+    Calculate quantitative risk metrics,
+    risk score, investor compatibility,
+    and actionable recommendations.
     """
 
     try:
+        # --------------------------------------------------
+        # Validate portfolio weights
+        # --------------------------------------------------
+
         if not request.weights:
             raise ValueError(
                 "Portfolio weights cannot be empty."
             )
 
-        total_weight = sum(request.weights.values())
+        total_weight = sum(
+            request.weights.values()
+        )
 
         if abs(total_weight - 1.0) > 0.0001:
             raise ValueError(
@@ -79,6 +147,10 @@ def analyze_risk(
                 f"{invalid_weights}"
             )
 
+        # --------------------------------------------------
+        # Normalize symbols
+        # --------------------------------------------------
+
         symbols = [
             symbol.strip().upper()
             for symbol in request.weights
@@ -89,26 +161,40 @@ def analyze_risk(
             for symbol, weight in request.weights.items()
         }
 
-        # Retrieve historical market prices.
-        price_data = portfolio_data_service.get_price_data(
-            symbols
+        # --------------------------------------------------
+        # Retrieve historical market prices
+        # --------------------------------------------------
+
+        price_data = (
+            portfolio_data_service.get_price_data(
+                symbols
+            )
         )
 
-        # Combine closing prices.
+        # --------------------------------------------------
+        # Combine closing prices
+        # --------------------------------------------------
+
         combined_prices = (
             portfolio_data_service.combine_price_data(
                 price_data
             )
         )
 
-        # Calculate daily asset returns.
+        # --------------------------------------------------
+        # Calculate daily asset returns
+        # --------------------------------------------------
+
         asset_returns = (
             portfolio_data_service.calculate_returns(
                 combined_prices
             )
         )
 
-        # Calculate daily portfolio returns.
+        # --------------------------------------------------
+        # Calculate daily portfolio returns
+        # --------------------------------------------------
+
         portfolio_returns = (
             portfolio_data_service.calculate_portfolio_returns(
                 asset_returns,
@@ -116,7 +202,10 @@ def analyze_risk(
             )
         )
 
-        # Calculate quantitative risk metrics.
+        # --------------------------------------------------
+        # Calculate quantitative risk metrics
+        # --------------------------------------------------
+
         annualized_volatility = (
             risk_service.calculate_volatility(
                 portfolio_returns
@@ -150,7 +239,10 @@ def analyze_risk(
             )
         )
 
-        # Calculate asset-level risk contribution.
+        # --------------------------------------------------
+        # Calculate asset-level risk contribution
+        # --------------------------------------------------
+
         risk_contribution = (
             risk_service.calculate_risk_contribution(
                 asset_returns,
@@ -158,22 +250,145 @@ def analyze_risk(
             )
         )
 
+        normalized_risk_contribution = {
+            symbol: float(value)
+            for symbol, value in risk_contribution.items()
+        }
+
+        # --------------------------------------------------
+        # Calculate overall risk score
+        # --------------------------------------------------
+
+        risk_score = (
+            risk_scoring_service.calculate_risk_score(
+                annualized_volatility=(
+                    annualized_volatility
+                ),
+                maximum_drawdown=(
+                    maximum_drawdown
+                ),
+                sharpe_ratio=(
+                    sharpe_ratio
+                ),
+                historical_value_at_risk=(
+                    historical_var
+                ),
+                expected_shortfall=(
+                    expected_shortfall
+                ),
+            )
+        )
+
+        risk_category = (
+            risk_scoring_service.classify_risk(
+                risk_score
+            )
+        )
+
+        # --------------------------------------------------
+        # Create investor domain model
+        # --------------------------------------------------
+
+        investor = InvestorProfile(
+            investment_amount=(
+                request.investor_profile
+                .investment_amount
+            ),
+            investment_horizon_years=(
+                request.investor_profile
+                .investment_horizon_years
+            ),
+            risk_tolerance=(
+                request.investor_profile
+                .risk_tolerance
+            ),
+            maximum_acceptable_loss=(
+                request.investor_profile
+                .maximum_acceptable_loss
+            ),
+            investment_objective=(
+                request.investor_profile
+                .investment_objective
+            ),
+        )
+
+        # --------------------------------------------------
+        # Assess investor compatibility
+        # --------------------------------------------------
+
+        compatibility = (
+            investor_assessment_service
+            .assess_compatibility(
+                investor=investor,
+                risk_score=risk_score,
+                maximum_drawdown=maximum_drawdown,
+            )
+        )
+
+        # --------------------------------------------------
+        # Generate recommendations
+        # --------------------------------------------------
+
+        recommendations = (
+            investor_assessment_service
+            .generate_recommendations(
+                investor=investor,
+                risk_score=risk_score,
+                maximum_drawdown=maximum_drawdown,
+                risk_contribution=(
+                    normalized_risk_contribution
+                ),
+            )
+        )
+
+        # --------------------------------------------------
+        # Return complete analysis
+        # --------------------------------------------------
+
         return {
             "weights": normalized_weights,
+
             "metrics": {
-                "annualized_volatility": annualized_volatility,
-                "maximum_drawdown": maximum_drawdown,
-                "sharpe_ratio": sharpe_ratio,
-                "historical_var": historical_var,
-                "expected_shortfall": expected_shortfall,
+                "annualized_volatility": (
+                    annualized_volatility
+                ),
+                "maximum_drawdown": (
+                    maximum_drawdown
+                ),
+                "sharpe_ratio": (
+                    sharpe_ratio
+                ),
+                "historical_var": (
+                    historical_var
+                ),
+                "expected_shortfall": (
+                    expected_shortfall
+                ),
             },
-            "risk_contribution": {
-                symbol: float(value)
-                for symbol, value in risk_contribution.items()
-            },
-            "confidence_level": request.confidence_level,
-            "risk_free_rate": request.risk_free_rate,
-            "trading_days": len(portfolio_returns),
+
+            "risk_score": risk_score,
+
+            "risk_category": risk_category,
+
+            "risk_contribution": (
+                normalized_risk_contribution
+            ),
+
+            "compatibility": compatibility,
+
+            "recommendations": recommendations,
+
+            "confidence_level": (
+                request.confidence_level
+            ),
+
+            "risk_free_rate": (
+                request.risk_free_rate
+            ),
+
+            "trading_days": (
+                len(portfolio_returns)
+            ),
         }
 
     except ValueError as exc:
