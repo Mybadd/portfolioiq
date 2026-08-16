@@ -1,3 +1,13 @@
+
+---
+
+# 4. `docs/roadmap.md`
+
+The important part is to bring the roadmap up to the actual state.
+
+Use this as the new roadmap:
+
+```md
 # PortfolioIQ Development Roadmap
 
 ## Project Status
@@ -5,13 +15,13 @@
 PortfolioIQ is being developed as a quantitative portfolio risk
 assessment and decision-support platform.
 
-The implementation is being developed incrementally, starting with
-the core backend risk engine and portfolio management functionality,
-followed by the frontend and API integration.
+Development is being performed incrementally, beginning with the
+core portfolio and quantitative risk engine, followed by API
+integration and the frontend decision-support workflow.
 
 ---
 
-## Phase 1 — Project Foundation
+# Phase 1 — Project Foundation
 
 **Status: Completed**
 
@@ -23,7 +33,7 @@ followed by the frontend and API integration.
 
 ---
 
-## Phase 2 — Market Data Layer
+# Phase 2 — Market Data Layer
 
 **Status: Completed**
 
@@ -32,32 +42,32 @@ followed by the frontend and API integration.
 - Added historical market data retrieval using Yahoo Finance.
 - Added current market price retrieval.
 - Added downloaded market-data validation.
-- Added support for storing historical data as CSV.
 - Added error handling and logging for market-data operations.
 
 ### Current Market Data
 
-- Historical data: 10 years
+- Historical period: approximately 10 years
 - Frequency: Daily
-- Current price lookup: 5 days of daily data
-- Primary implementation currently uses Yahoo Finance.
+- Current price lookup: 5 days
+- Primary implementation: Yahoo Finance through `yfinance`
 
 ---
 
-## Phase 3 — Portfolio Management
+# Phase 3 — Portfolio Management
 
 **Status: Completed**
 
 - Implemented portfolio creation using asset weights.
 - Implemented portfolio creation using investment amounts.
-- Implemented portfolio creation from share holdings.
+- Implemented portfolio creation using share holdings.
 - Added portfolio weight validation.
 - Added asset-symbol validation.
 - Added investment amount validation.
-- Added current-price-based portfolio valuation for share
-  holdings.
-- Implemented calculation of portfolio weights from share
-  holdings.
+- Added share quantity validation.
+- Added current-price-based valuation for share holdings.
+- Implemented calculation of portfolio weights from share holdings.
+- Implemented normalization of investment amounts into portfolio
+  weights.
 
 ### Portfolio Input Methods
 
@@ -65,124 +75,13 @@ followed by the frontend and API integration.
 2. Investment Amounts
 3. Portfolio Weights
 
----
-
-## Phase 4 — Risk Analysis Engine
-
-**Status: Completed**
-
-Implemented quantitative portfolio risk calculations:
-
-- Annualized volatility
-- Maximum drawdown
-- Sharpe ratio
-- Historical Value at Risk (VaR)
-- Expected Shortfall
-- Risk contribution
-- Stress testing
-
-Risk calculation validation and error handling have also been
-implemented.
-
----
-
-## Phase 5 — Investor Profile and Assessment
-
-**Status: Completed**
-
-Implemented the `InvestorProfile` model with:
-
-- Investment amount
-- Investment horizon
-- Risk tolerance
-- Maximum acceptable loss
-- Investment objective
-
-Validation rules were added for investor inputs.
-
-Portfolio allocation can also be validated against the investor's
-investment amount.
-
----
-
-## Phase 6 — Frontend Foundation
-
-**Status: Completed**
-
-Implemented the initial Next.js frontend.
-
-### Investor Profile
-
-The landing page collects:
-
-- Investment amount
-- Investment horizon
-- Risk tolerance
-- Maximum acceptable loss
-- Investment objective
-
-### Portfolio Page
-
-Implemented portfolio input through:
-
-- DMAT holdings
-- Investment amounts
-- Portfolio weights
-
-The interface supports:
-
-- Adding assets
-- Removing assets
-- Portfolio-weight validation
-- Navigation between workflow stages
-
-### Dashboard
-
-Implemented the initial dashboard interface containing:
-
-- Portfolio overview
-- Risk score display
-- Risk metrics
-- Portfolio allocation
-- Risk contribution
-- Investor compatibility
-- Recommended actions
-
-The dashboard currently contains some mock analytical values that
-will later be replaced with results from the backend risk engine.
-
----
-
-## Phase 7 — FastAPI Integration
-
-## Phase 7 — FastAPI Integration
-
-**Status: In Progress**
-
-### Completed
-
-- Added FastAPI application entry point.
-- Added API health-check endpoint.
-- Added FastAPI automatic documentation.
-- Added portfolio creation API.
-- Added portfolio creation from share holdings API.
-- Connected portfolio APIs to the existing portfolio services.
-- Successfully tested portfolio APIs using Postman.
-- Added Risk Analysis API.
-- Connected Risk API to `PortfolioDataService`.
-- Connected Risk API to `RiskService`.
-- Successfully tested `POST /api/risk/analyze` using Postman.
-- Verified annualized volatility calculation.
-- Verified maximum drawdown calculation.
-- Verified Sharpe ratio calculation.
-- Verified Historical VaR calculation.
-- Verified Expected Shortfall calculation.
-- Verified asset-level risk contribution calculation.
-
-### Current Endpoints
+### Portfolio Processing
 
 ```text
-GET  /health
-POST /api/portfolio/create
-POST /api/portfolio/from-shares
-POST /api/risk/analyze  
+DMAT Holdings
+      ↓
+Current Market Prices
+      ↓
+Market Values
+      ↓
+Portfolio Weights

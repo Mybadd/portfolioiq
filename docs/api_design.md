@@ -38,17 +38,21 @@ Verifies that the PortfolioIQ API is running correctly.
 
 **Purpose:**
 
-Creates and validates a portfolio using asset allocation
-weights.
+Creates and validates a portfolio using user-specified asset
+allocation weights.
+
+The frontend accepts percentages, while the backend expects
+normalized decimal weights.
 
 ### Request
 
 ```json
 {
   "weights": {
-    "NFLX": 0.20,
-    "PEP": 0.25,
-    "WMT": 0.20,
-    "UNH": 0.15,
-    "DIS": 0.20
+    "NFLX": 0.10,
+    "PEP": 0.20,
+    "WMT": 0.15,
+    "UNH": 0.40,
+    "DIS": 0.15
   }
+}

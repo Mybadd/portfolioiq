@@ -198,110 +198,191 @@ export default function PortfolioPage() {
   };
 
   const handleContinue = async () => {
-    if (!validatePortfolio()) {
-      return;
+  if (!validatePortfolio()) {
+    return;
+  }
+
+  setError("");
+
+  try {
+    let endpoint = "";
+    let requestBody = {};
+
+    /*
+     * ------------------------------------------------------
+     * 1. DMAT Holdings
+     * ------------------------------------------------------
+     *
+     * Send number of shares to the backend.
+     * The backend retrieves current market prices
+     * and calculates portfolio weights.
+     */
+    if (mode === "shares") {
+      const holdingsPayload = holdings.reduce(
+        (result, holding) => {
+          result[
+            holding.symbol.trim().toUpperCase()
+          ] = Number(holding.shares);
+
+          return result;
+        },
+        {} as Record<string, number>
+      );
+
+      endpoint =
+        "http://127.0.0.1:8000/api/portfolio/from-shares";
+
+      requestBody = {
+        holdings: holdingsPayload,
+      };
     }
 
-    setError("");
+    /*
+     * ------------------------------------------------------
+     * 2. Investment Amounts
+     * ------------------------------------------------------
+     *
+     * Send the amount invested in each asset.
+     * The backend converts the amounts into
+     * normalized portfolio weights.
+     */
+    else if (mode === "amounts") {
+      const amountsPayload = holdings.reduce(
+        (result, holding) => {
+          result[
+            holding.symbol.trim().toUpperCase()
+          ] = Number(holding.amount);
 
-    try {
-      /*
-       * DMAT Holdings
-       *
-       * Send the number of shares to the Python backend.
-       * The backend retrieves current market prices and
-       * calculates the portfolio weights.
-       */
-      if (mode === "shares") {
-        const holdingsPayload = holdings.reduce(
-          (result, holding) => {
-            result[
-              holding.symbol.trim().toUpperCase()
-            ] = Number(holding.shares);
+          return result;
+        },
+        {} as Record<string, number>
+      );
 
-            return result;
-          },
-          {} as Record<string, number>
-        );
+      endpoint =
+        "http://127.0.0.1:8000/api/portfolio/from-amounts";
 
-        const response = await fetch(
-          "http://127.0.0.1:8000/api/portfolio/from-shares",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              holdings: holdingsPayload,
-            }),
-          }
-        );
+      requestBody = {
+        amounts: amountsPayload,
+      };
+    }
 
-        if (!response.ok) {
-          let errorMessage =
-            "Failed to create portfolio.";
+    /*
+     * ------------------------------------------------------
+     * 3. Portfolio Weights
+     * ------------------------------------------------------
+     *
+     * The UI accepts percentages such as 20%.
+     * The backend expects decimal weights such as 0.20.
+     */
+    else {
+      const weightsPayload = holdings.reduce(
+        (result, holding) => {
+          result[
+            holding.symbol.trim().toUpperCase()
+          ] = Number(holding.weight) / 100;
 
-          try {
-            const errorData = await response.json();
+          return result;
+        },
+        {} as Record<string, number>
+      );
 
-            if (errorData.detail) {
-              errorMessage = errorData.detail;
-            }
-          } catch {
-            // Keep default error message.
-          }
+      endpoint =
+        "http://127.0.0.1:8000/api/portfolio/create";
 
-          throw new Error(errorMessage);
+      requestBody = {
+        weights: weightsPayload,
+      };
+    }
+
+    /*
+     * ------------------------------------------------------
+     * Send portfolio request
+     * ------------------------------------------------------
+     */
+    const response = await fetch(
+      endpoint,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    /*
+     * Handle API errors
+     */
+    if (!response.ok) {
+      let errorMessage =
+        "Failed to create portfolio.";
+
+      try {
+        const errorData =
+          await response.json();
+
+        if (errorData.detail) {
+          errorMessage =
+            typeof errorData.detail === "string"
+              ? errorData.detail
+              : "Portfolio validation failed.";
         }
-
-        const portfolioResult = await response.json();
-
-        const portfolio: StoredPortfolio = {
-          inputMode: mode,
-          holdings,
-          calculatedWeights:
-            portfolioResult.weights,
-          assetCount:
-            portfolioResult.asset_count,
-          totalWeight:
-            portfolioResult.total_weight,
-        };
-
-        sessionStorage.setItem(
-          "portfolioiq-portfolio",
-          JSON.stringify(portfolio)
-        );
-
-        window.location.href = "/dashboard";
-
-        return;
+      } catch {
+        // Keep default error message.
       }
 
-      /*
-       * Investment Amounts and Portfolio Weights
-       *
-       * These will be connected to dedicated backend
-       * endpoints later.
-       */
-      const portfolio: StoredPortfolio = {
-        inputMode: mode,
-        holdings,
-      };
-
-      sessionStorage.setItem(
-        "portfolioiq-portfolio",
-        JSON.stringify(portfolio)
-      );
-
-      window.location.href = "/dashboard";
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect to PortfolioIQ backend."
-      );
+      throw new Error(errorMessage);
     }
-  };
+
+    /*
+     * ------------------------------------------------------
+     * Store normalized portfolio result
+     * ------------------------------------------------------
+     *
+     * All three input methods produce the same
+     * StoredPortfolio structure.
+     *
+     * This keeps Dashboard independent of the
+     * portfolio input method.
+     */
+    const portfolioResult =
+      await response.json();
+
+    const portfolio: StoredPortfolio = {
+      inputMode: mode,
+      holdings,
+      calculatedWeights:
+        portfolioResult.weights,
+      assetCount:
+        portfolioResult.asset_count,
+      totalWeight:
+        portfolioResult.total_weight,
+    };
+
+    sessionStorage.setItem(
+      "portfolioiq-portfolio",
+      JSON.stringify(portfolio)
+    );
+
+    /*
+     * Clear any previous risk result.
+     *
+     * The portfolio has changed, so the Dashboard
+     * must calculate fresh risk metrics.
+     */
+    sessionStorage.removeItem(
+      "portfolioiq-risk-analysis"
+    );
+
+    window.location.href = "/dashboard";
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Unable to connect to PortfolioIQ backend."
+    );
+  }
+};
 
   return (
     <main className="min-h-screen bg-[#080b10] text-zinc-100">

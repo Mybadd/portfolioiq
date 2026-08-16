@@ -1,9 +1,11 @@
 """
 Portfolio API routes.
+
+Provides portfolio creation and validation through FastAPI.
 """
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from backend.portfolio.portfolio_service import PortfolioService
 
@@ -17,29 +19,39 @@ portfolio_service = PortfolioService()
 
 
 class PortfolioRequest(BaseModel):
-    weights: dict[str, float]
-
-class ShareHoldingsRequest(BaseModel):
-    holdings: dict[str, float]
-
-@router.post("/create")
-@router.post("/from-shares")
-def create_portfolio_from_shares(
-    request: ShareHoldingsRequest,
-) -> dict:
     """
-    Create a portfolio from DMAT share holdings.
+    Portfolio request using normalized asset weights.
     """
 
-    portfolio = portfolio_service.create_portfolio_from_shares(
-        request.holdings
+    weights: dict[str, float] = Field(
+        ...,
+        description="Portfolio weights expressed as decimals.",
     )
 
-    return {
-        "weights": portfolio.weights,
-        "asset_count": len(portfolio.weights),
-        "total_weight": sum(portfolio.weights.values()),
-    }
+
+class AmountHoldingsRequest(BaseModel):
+    """
+    Portfolio request using monetary investment amounts.
+    """
+
+    amounts: dict[str, float] = Field(
+        ...,
+        description="Investment amount for each asset.",
+    )
+
+
+class ShareHoldingsRequest(BaseModel):
+    """
+    Portfolio request using number of shares held.
+    """
+
+    holdings: dict[str, float] = Field(
+        ...,
+        description="Number of shares held for each asset.",
+    )
+
+
+@router.post("/create")
 def create_portfolio(
     request: PortfolioRequest,
 ) -> dict:
@@ -47,12 +59,107 @@ def create_portfolio(
     Create and validate a portfolio from asset weights.
     """
 
-    portfolio = portfolio_service.create_portfolio(
-        request.weights
-    )
+    try:
+        portfolio = portfolio_service.create_portfolio(
+            request.weights
+        )
 
-    return {
-        "weights": portfolio.weights,
-        "asset_count": len(portfolio.weights),
-        "total_weight": sum(portfolio.weights.values()),
-    }
+        return {
+            "weights": portfolio.weights,
+            "asset_count": len(portfolio.weights),
+            "total_weight": sum(
+                portfolio.weights.values()
+            ),
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Portfolio creation failed: {str(exc)}",
+        ) from exc
+
+
+@router.post("/from-amounts")
+def create_portfolio_from_amounts(
+    request: AmountHoldingsRequest,
+) -> dict:
+    """
+    Create a portfolio from monetary investment amounts.
+
+    The backend converts the investment amounts into
+    normalized portfolio weights.
+    """
+
+    try:
+        portfolio = (
+            portfolio_service.create_portfolio_from_amounts(
+                request.amounts
+            )
+        )
+
+        return {
+            "weights": portfolio.weights,
+            "asset_count": len(portfolio.weights),
+            "total_weight": sum(
+                portfolio.weights.values()
+            ),
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Portfolio creation from amounts failed: "
+            f"{str(exc)}",
+        ) from exc
+
+
+@router.post("/from-shares")
+def create_portfolio_from_shares(
+    request: ShareHoldingsRequest,
+) -> dict:
+    """
+    Create a portfolio from DMAT share holdings.
+
+    Current market prices are used by PortfolioService
+    to calculate normalized portfolio weights.
+    """
+
+    try:
+        portfolio = (
+            portfolio_service.create_portfolio_from_shares(
+                request.holdings
+            )
+        )
+
+        return {
+            "weights": portfolio.weights,
+            "asset_count": len(portfolio.weights),
+            "total_weight": sum(
+                portfolio.weights.values()
+            ),
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Portfolio creation from shares failed: "
+            f"{str(exc)}",
+        ) from exc
