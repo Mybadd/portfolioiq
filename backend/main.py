@@ -7,6 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.portfolio_routes import router as portfolio_router
 from backend.api.risk_routes import router as risk_router
+from backend.api.optimization_routes import (
+    router as optimization_router,
+)
+
 
 app = FastAPI(
     title="PortfolioIQ",
@@ -38,3 +42,4 @@ def health_check() -> dict[str, str]:
 
 app.include_router(portfolio_router)
 app.include_router(risk_router)
+app.include_router(optimization_router)

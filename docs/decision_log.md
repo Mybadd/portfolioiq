@@ -186,3 +186,167 @@ Portfolio Weights
 Portfolio Weights
       ↓
 Portfolio Weights
+## Decision 07 — Add Risk Parity Portfolio Optimization
+
+**Date:** 2026-08-17
+
+### Context
+
+PortfolioIQ already supported quantitative portfolio risk analysis and
+minimum-variance portfolio optimization. A minimum-variance objective
+primarily minimizes portfolio variance and does not explicitly control
+how total portfolio risk is distributed across individual assets.
+
+### Decision
+
+Add **Risk Parity** as a second portfolio optimization methodology.
+
+Risk Parity attempts to make each asset contribute approximately equally
+to total portfolio risk.
+
+For asset i, the portfolio risk contribution is calculated as:
+
+RC_i = w_i × (Σw)_i / (wᵀΣw)
+
+For N assets, the optimizer targets:
+
+RC_i ≈ 1/N
+
+The implementation minimizes the squared deviation between each asset's
+risk contribution and the equal-risk target.
+
+### Constraints
+
+The Risk Parity optimizer uses:
+
+- Long-only portfolio weights.
+- Portfolio weights summing to 100%.
+- Configurable maximum allocation per asset.
+- Optional maximum portfolio volatility.
+- SLSQP constrained optimization.
+- Covariance-matrix regularization for numerical stability.
+
+### Rationale
+
+Risk Parity provides a different portfolio construction philosophy
+from Minimum Variance.
+
+Minimum Variance asks:
+
+> Which portfolio minimizes total variance?
+
+Risk Parity asks:
+
+> How can portfolio risk be distributed more evenly across assets?
+
+This is particularly useful when one asset dominates the portfolio's
+risk despite having a moderate capital allocation.
+
+### Validation
+
+For the five-asset test portfolio, Risk Parity produced approximately:
+
+- NFLX: 20% risk contribution
+- PEP: 20% risk contribution
+- WMT: 20% risk contribution
+- UNH: 20% risk contribution
+- DIS: 20% risk contribution
+
+This confirms that the implementation is optimizing risk contribution,
+rather than simply assigning equal capital weights.
+
+### Result
+
+Risk Parity is now supported alongside Minimum Variance through the
+optimization API.
+
+Supported methods:
+
+- `MINIMUM_VARIANCE`
+- `RISK_PARITY`
+
+The API returns the selected optimization method together with the
+original weights, optimized weights, and before/after risk metrics.
+
+---
+
+## Decision 08 — Use Risk-Based Optimization Rather Than Drawdown-Only Optimization
+
+**Date:** 2026-08-17
+
+### Context
+
+Maximum drawdown is an important portfolio risk metric, but directly
+optimizing historical maximum drawdown can produce an objective that is
+highly dependent on a particular historical path.
+
+### Decision
+
+Do not make historical maximum drawdown the sole optimization objective.
+
+Instead, use multiple quantitative optimization methodologies and
+evaluate their resulting portfolios using a common risk framework.
+
+The comparison framework evaluates:
+
+- Annualized volatility
+- Maximum drawdown
+- Sharpe ratio
+- Historical VaR
+- Expected Shortfall
+- Portfolio risk score
+
+### Rationale
+
+This separates:
+
+1. **Portfolio construction** — how weights are selected.
+2. **Risk measurement** — how the resulting portfolio is evaluated.
+
+This prevents a single historical metric from dominating the entire
+optimization engine.
+
+---
+
+## Decision 09 — Add CVaR Optimization as the Next Quantitative Method
+
+**Date:** 2026-08-17
+
+### Context
+
+PortfolioIQ already calculates Expected Shortfall (CVaR) as part of its
+portfolio risk analysis. Risk Parity improves the distribution of risk
+contributions, but it does not directly minimize losses in the tail of
+the return distribution.
+
+### Decision
+
+The next optimization methodology will be **CVaR / Expected Shortfall
+Optimization**.
+
+The objective will focus on minimizing expected losses beyond a chosen
+confidence threshold, such as the worst 5% of historical outcomes.
+
+### Rationale
+
+CVaR optimization directly connects portfolio construction with the
+tail-risk metrics already reported by PortfolioIQ.
+
+The planned optimization hierarchy is:
+
+1. Minimum Variance
+2. Risk Parity
+3. CVaR / Expected Shortfall Optimization
+
+Future methods may include:
+
+- Maximum Sharpe Ratio
+- Mean-CVaR Optimization
+- Black-Litterman
+- Robust Portfolio Optimization
+
+### Expected Outcome
+
+The optimization engine should allow users to select an optimization
+method based on their desired portfolio construction objective rather
+than relying on a single optimization model.
