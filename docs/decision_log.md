@@ -350,3 +350,179 @@ Future methods may include:
 The optimization engine should allow users to select an optimization
 method based on their desired portfolio construction objective rather
 than relying on a single optimization model.
+
+## Decision: Historical Stress Testing
+
+### Decision
+
+Add historical market-event stress testing alongside the existing
+hypothetical stress-testing framework.
+
+### Rationale
+
+Hypothetical stress testing evaluates the portfolio under manually
+defined asset-level shocks, while historical stress testing replays
+actual market behavior observed during a defined historical period.
+
+Historical scenarios provide an economically plausible stress case
+because the underlying market movements actually occurred. However,
+historical scenarios are backward-looking and do not imply that the
+same event or loss will recur.
+
+### Implementation
+
+Historical stress testing uses the existing portfolio market-data
+pipeline.
+
+The process is:
+
+1. Retrieve historical closing prices for all portfolio assets.
+2. Select the dates corresponding to the historical scenario.
+3. Calculate each asset's event-period return:
+
+   R_i = (P_i,end / P_i,start) - 1
+
+4. Calculate the portfolio impact:
+
+   R_p = Σ(w_i × R_i)
+
+5. Calculate the portfolio value after the event:
+
+   V_after = 1 + R_p
+
+6. Calculate the recovery return required:
+
+   Recovery = (1 / V_after) - 1
+
+7. Calculate each asset's contribution:
+
+   Contribution_i = w_i × R_i
+
+### Historical Scenarios
+
+The first supported scenarios are:
+
+| Scenario | Start Date | End Date |
+|---|---|---|
+| COVID-19 Crash | 2020-02-19 | 2020-03-23 |
+| 2022 Bear Market | 2022-01-03 | 2022-10-12 |
+
+### API
+
+Historical stress testing is exposed through:
+
+POST `/api/stress-test/historical`
+
+The existing hypothetical stress-testing endpoint remains:
+
+POST `/api/stress-test/analyze`
+
+This keeps hypothetical and historical stress testing as separate
+scenario methodologies while sharing the same portfolio and result
+framework.
+
+### Example Result
+
+For the portfolio:
+
+- NFLX: 10%
+- PEP: 20%
+- WMT: 15%
+- UNH: 40%
+- DIS: 15%
+
+the COVID-19 Crash scenario produced:
+
+- Portfolio impact: -27.02%
+- Portfolio value after event: 72.98%
+- Recovery required: 37.02%
+
+UNH was the largest contributor to the portfolio loss:
+
+- Portfolio weight: 40%
+- Historical return: -36.18%
+- Portfolio contribution: -14.47%
+
+### Risk Interpretation
+
+Historical stress testing is complementary to statistical risk
+measures such as volatility, VaR, and Expected Shortfall. It provides
+a concrete scenario-based view of portfolio vulnerability rather than
+a probability estimate of future losses.
+
+Historical scenarios should therefore not be interpreted as forecasts.
+They demonstrate how the current portfolio would have behaved if the
+specified historical asset movements were applied to it.
+
+### Design Decision
+
+The implementation intentionally reuses the existing
+`PortfolioDataService` rather than introducing a separate market-data
+pipeline.
+
+This reduces duplicated data retrieval logic and ensures that
+historical stress testing uses the same market-data source as the
+portfolio risk and optimization modules.
+## Monte Carlo Simulation
+
+### Decision
+
+Implemented historical bootstrap Monte Carlo simulation
+for forward-looking portfolio return and tail-risk analysis.
+
+### Method
+
+Historical daily asset-return observations are sampled
+with replacement. Complete historical rows are sampled
+together to preserve cross-asset relationships.
+
+### Horizons
+
+- 1M — 21 trading days
+- 3M — 63 trading days
+- 6M — 126 trading days
+- 1Y — 252 trading days
+- 2Y — 504 trading days
+
+### Simulation Configuration
+
+- Default simulations: 10,000
+- Confidence level: 95%
+- Random seed: 42
+- Historical observations: determined from available market data
+
+### Metrics
+
+- Mean Return
+- Median Return
+- Probability of Loss
+- Value at Risk (VaR)
+- Expected Shortfall
+
+### Frontend
+
+The backend calculates all supported horizons in a
+single request. The frontend provides a horizon dropdown
+and displays the results for the selected horizon.
+
+### Rationale
+
+Historical bootstrap was selected because it does not
+assume normally distributed returns and preserves the
+historical dependence structure between portfolio assets.
+## Recommendation Engine
+
+### Decision
+
+No automated investment recommendation engine was added.
+
+### Rationale
+
+PortfolioIQ is designed primarily as a quantitative
+risk assessment and portfolio analysis engine. The system
+reports measurable risk characteristics, optimization
+results, stress-test outcomes, and simulated distributions
+rather than generating discretionary buy/sell recommendations.
+
+This keeps the output evidence-based and avoids introducing
+unsupported investment recommendations.

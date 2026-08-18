@@ -10,7 +10,12 @@ from backend.api.risk_routes import router as risk_router
 from backend.api.optimization_routes import (
     router as optimization_router,
 )
-
+from backend.api.stress_test_routes import (
+    router as stress_test_router,
+)
+from backend.api.monte_carlo_routes import (
+    router as monte_carlo_router,
+)
 
 app = FastAPI(
     title="PortfolioIQ",
@@ -43,3 +48,9 @@ def health_check() -> dict[str, str]:
 app.include_router(portfolio_router)
 app.include_router(risk_router)
 app.include_router(optimization_router)
+app.include_router(
+    stress_test_router
+)
+app.include_router(
+    monte_carlo_router
+)
