@@ -526,3 +526,184 @@ rather than generating discretionary buy/sell recommendations.
 
 This keeps the output evidence-based and avoids introducing
 unsupported investment recommendations.
+
+---
+
+# 2. `docs/decision_log.md`
+
+For this one, I recommend **preserving your existing decisions** and adding the following entries at the end.
+
+Paste this at the bottom:
+
+```md
+---
+
+## Decision: Multi-Horizon Monte Carlo Simulation
+
+**Date:** 2026-08-19
+
+### Decision
+
+Monte Carlo simulation will calculate all supported investment
+horizons on the backend:
+
+- 1 Month — 21 trading days
+- 3 Months — 63 trading days
+- 6 Months — 126 trading days
+- 1 Year — 252 trading days
+- 2 Years — 504 trading days
+
+The frontend will provide a horizon selector and display the
+precomputed result corresponding to the selected horizon.
+
+### Rationale
+
+Calculating all horizons on the backend provides a consistent
+simulation result set and prevents the frontend from repeatedly
+requesting expensive simulations when the user changes the
+selected horizon.
+
+This also keeps quantitative simulation logic inside the backend
+service layer.
+
+### Consequence
+
+The Monte Carlo API returns a collection of horizon-specific
+results rather than a single simulation result.
+
+---
+
+## Decision: Historical Bootstrap Monte Carlo
+
+**Date:** 2026-08-19
+
+### Decision
+
+PortfolioIQ uses historical bootstrap sampling as the initial
+Monte Carlo methodology.
+
+Complete historical daily return rows are sampled together
+rather than sampling each asset independently.
+
+### Rationale
+
+Sampling complete historical rows preserves the observed
+cross-asset relationship in the historical data.
+
+This is more appropriate for portfolio-level simulation than
+independently sampling each asset's historical returns.
+
+### Consequence
+
+The simulation remains dependent on the historical return
+distribution and historical asset relationships.
+
+---
+
+## Decision: Monte Carlo Metrics
+
+**Date:** 2026-08-19
+
+### Decision
+
+The backend calculates a comprehensive set of Monte Carlo
+statistics, while the frontend may selectively display the
+metrics that are most useful to the user.
+
+The backend output includes:
+
+- Mean return
+- Median return
+- Probability of loss
+- Probability of loss greater than 10%
+- Probability of loss greater than 20%
+- Value at Risk
+- Expected Shortfall
+- 5th percentile
+- 95th percentile
+- Worst simulated return
+- Best simulated return
+- Distribution histogram
+
+### Rationale
+
+Keeping the full quantitative result in the backend allows
+future frontend reporting and visualization features without
+re-running the simulation.
+
+The user interface should avoid unnecessary duplication and
+should prioritize metrics that directly support portfolio
+risk interpretation.
+
+### Consequence
+
+Backend and frontend responsibilities remain separated:
+the backend produces quantitative results, while the frontend
+controls presentation.
+
+---
+
+## Decision: Shared Frontend Navigation
+
+**Date:** 2026-08-19
+
+### Decision
+
+Application navigation is implemented through a shared
+Next.js `Navigation` component.
+
+The component is reused across the primary application pages.
+
+### Rationale
+
+Previously, navigation structures were duplicated inside
+individual pages.
+
+Centralizing navigation:
+
+- Reduces duplicated code
+- Keeps routes consistent
+- Makes future navigation changes easier
+- Provides a consistent user experience
+
+### Consequence
+
+Individual pages no longer maintain their own primary
+progress/navigation structure.
+
+The navigation component is responsible for:
+
+- Navigation labels
+- Navigation order
+- Application routes
+- Active-page highlighting
+
+---
+
+## Decision: No Automated Investment Recommendation
+
+**Date:** 2026-08-19
+
+### Decision
+
+PortfolioIQ will not provide an automated investment
+recommendation based solely on Monte Carlo simulation results.
+
+### Rationale
+
+A recommendation such as "buy", "sell", or "increase allocation"
+would require assumptions beyond the available simulation results,
+including investor objectives, valuation, market conditions,
+liquidity requirements, and other financial considerations.
+
+Monte Carlo simulation is therefore treated as a quantitative
+risk-analysis tool rather than an automated investment-advice
+engine.
+
+### Consequence
+
+Monte Carlo results are presented as scenario and risk
+information.
+
+The system does not convert simulation outcomes directly into
+investment recommendations.

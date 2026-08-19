@@ -1,11 +1,3 @@
-
----
-
-# 2. `docs/architecture.md`
-
-Replace the architecture flow with this structure:
-
-```md
 # PortfolioIQ — System Architecture
 
 ## 1. Architecture Overview
@@ -23,6 +15,7 @@ The system separates:
 - Investor assessment
 - Portfolio optimization
 - Stress testing
+- Monte Carlo simulation
 - Risk reporting
 - Frontend presentation
 
@@ -61,29 +54,30 @@ tested, and maintained independently.
                             v
                   Normalized Weights
                             |
-                            v
-                   Risk Analysis API
+          +-----------------+-----------------+-----------------+
+          |                 |                 |                 |
+          v                 v                 v                 v
+    Risk Analysis      Optimization      Stress Testing    Monte Carlo
+          |                 |                 |                 |
+          v                 v                 v                 v
+    RiskService      PortfolioOptimizer  Stress Services   MonteCarloService
+          |                 |                 |                 |
+          v                 v                 v                 v
+    Risk Metrics      Optimized Weights   Scenario Impact   Simulated Returns
+    Risk Score        Risk Comparison     Historical Events  Tail Risk
+    Risk Contribution
+          |                 |                 |                 |
+          +-----------------+-----------------+-----------------+
                             |
                             v
-                    RiskService
+                     Frontend Analysis
                             |
           +-----------------+-----------------+
           |                 |                 |
           v                 v                 v
-    Risk Metrics       Risk Score       Risk Contribution
+      Dashboard         Risk Analysis      Decision Support
           |                 |                 |
           +-----------------+-----------------+
                             |
                             v
-             InvestorAssessmentService
-                            |
-                  +---------+---------+
-                  |                   |
-                  v                   v
-        Compatibility        Recommendations
-                  |
-                  v
-            Risk Dashboard
-                  |
-                  v
-        Investor Decision Support
+                    Investor Evaluation
