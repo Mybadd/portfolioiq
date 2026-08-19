@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Navigation from "@/components/Navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -276,8 +277,10 @@ export default function OptimizePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#080b10] text-zinc-200">
-      <div className="mx-auto max-w-7xl px-6 py-10">
+  <main className="min-h-screen bg-[#080b10] text-zinc-200">
+    <Navigation />
+
+    <div className="mx-auto max-w-7xl px-6 py-10">
 
         {/* Header */}
         <div className="mb-10 flex items-start justify-between">

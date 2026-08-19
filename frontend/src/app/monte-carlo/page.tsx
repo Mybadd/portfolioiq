@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
+import Navigation from "@/components/Navigation";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   "http://127.0.0.1:8000";
@@ -215,8 +215,10 @@ export default function MonteCarloPage() {
     selectedResult.statistics;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-10">
+  <main className="min-h-screen bg-slate-950 text-white">
+    <Navigation />
+
+    <div className="mx-auto max-w-7xl px-6 py-10">
 
         {/* Header */}
         <div className="mb-8">

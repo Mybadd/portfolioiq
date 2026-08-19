@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Navigation from "@/components/Navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -409,52 +410,7 @@ export default function PortfolioPage() {
         </div>
       </header>
 
-      {/* Progress */}
-      <div className="border-b border-white/10 bg-[#0b0f15]">
-        <div className="mx-auto flex max-w-7xl items-center overflow-x-auto px-6 lg:px-10">
-          {[
-            ["01", "Profile", "/"],
-            ["02", "Portfolio", "/portfolio"],
-            ["03", "Dashboard", "/dashboard"],
-            ["04", "Risk", "/risk"],
-            ["05", "Optimize", "/optimize"],
-            ["06", "Stress Test", "/stress-test"],
-            ["07", "Report", "/report"],
-          ].map(([number, label, route]) => {
-            const active = number === "02";
-
-            return (
-              <button
-                type="button"
-                key={number}
-                onClick={() => {
-                  window.location.href = route;
-                }}
-                className={`flex shrink-0 items-center gap-2 border-r border-white/10 px-4 py-3 first:pl-0 ${
-                  active
-                    ? "text-zinc-100"
-                    : "text-zinc-600 hover:text-zinc-300"
-                }`}
-              >
-                <span
-                  className={`font-mono text-[10px] ${
-                    active
-                      ? "text-emerald-400"
-                      : "text-zinc-600"
-                  }`}
-                >
-                  {number}
-                </span>
-
-                <span className="text-[10px] uppercase tracking-[0.14em]">
-                  {label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
+      <Navigation />
       {/* Main */}
       <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-14">
         {/* Page heading */}

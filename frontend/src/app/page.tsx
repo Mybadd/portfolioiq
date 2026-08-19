@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRight, ShieldCheck, TrendingUp } from "lucide-react";
-
+import Navigation from "@/components/Navigation";
 const riskOptions = ["LOW", "MODERATE", "HIGH"] as const;
 
 const objectives = [
@@ -68,70 +68,10 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#080b10] text-zinc-100">
-      {/* Top navigation */}
-      <header className="border-b border-white/10">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-10">
-          <div>
-            <div className="text-lg font-semibold tracking-[0.18em]">
-              PORTFOLIO<span className="text-emerald-400">IQ</span>
-            </div>
+  <main className="min-h-screen bg-[#080b10] text-zinc-100">
+    <Navigation />
 
-            <div className="mt-0.5 text-[9px] uppercase tracking-[0.28em] text-zinc-500">
-              Quantitative Portfolio Intelligence
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            System Ready
-          </div>
-        </div>
-      </header>
-
-              {/* Progress */}
-    <div className="border-b border-white/10 bg-[#0b0f15]">
-      <div className="mx-auto flex max-w-7xl items-center px-6 lg:px-10">
-        {[
-          ["01", "Profile", "/"],
-          ["02", "Portfolio", "/portfolio"],
-          ["03", "Dashboard", "/dashboard"],
-          ["04", "Risk", "/risk-analysis"],
-          ["05", "Optimize", "/optimization"],
-          ["06", "Stress Test", "/stress-test"],
-          ["07", "Report", "/report"],
-        ].map(([number, label, path]) => {
-          const active = number === "01";
-
-          return (
-            <a
-              key={number}
-              href={path}
-              className={`flex items-center gap-2 border-r border-white/10 px-4 py-3 first:pl-0 transition ${
-                active
-                  ? "text-zinc-100"
-                  : "text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
-              }`}
-            >
-              <span
-                className={`font-mono text-[10px] ${
-                  active
-                    ? "text-emerald-400"
-                    : "text-zinc-600"
-                }`}
-              >
-                {number}
-              </span>
-
-              <span className="text-[10px] uppercase tracking-[0.14em]">
-                {label}
-              </span>
-            </a>
-          );
-        })}
-      </div>
-    </div>
-
+    {/* Rest of Profile page */}
       {/* Main content */}
       <section className="mx-auto grid min-h-[calc(100vh-105px)] max-w-7xl grid-cols-1 gap-12 px-6 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:px-10 lg:py-20">
         {/* Left introduction */}
