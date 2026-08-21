@@ -163,3 +163,54 @@ def create_portfolio_from_shares(
             detail=f"Portfolio creation from shares failed: "
             f"{str(exc)}",
         ) from exc
+@router.post("/state")
+def get_portfolio_state(
+        request: ShareHoldingsRequest,
+    ) -> dict:
+        """
+        Create and return the current market state
+        of a portfolio.
+
+        The portfolio state includes the holdings,
+        current market prices, position values,
+        total portfolio value, and dynamic weights.
+        """
+
+        try:
+            portfolio_state = (
+                portfolio_service.create_portfolio_state(
+                    request.holdings
+                )
+            )
+
+            return {
+                "holdings": portfolio_state.holdings,
+                "latest_prices": (
+                    portfolio_state.latest_prices
+                ),
+                "position_values": (
+                    portfolio_state.position_values
+                ),
+                "total_portfolio_value": (
+                    portfolio_state.total_portfolio_value
+                ),
+                "weights": portfolio_state.weights,
+                "asset_count": len(
+                    portfolio_state.holdings
+                ),
+            }
+
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=str(exc),
+            ) from exc
+
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Portfolio state creation failed: "
+                    f"{str(exc)}"
+                ),
+            ) from exc
